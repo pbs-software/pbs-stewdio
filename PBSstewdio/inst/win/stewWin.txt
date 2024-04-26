@@ -1,0 +1,12 @@
+# PBSstew GUI (last modified: 2024-04-25)
+window name=PBSstew title="PBSstewdio for Package Building" #onclose=
+
+#Setup--------------------------------------------------------------------------
+grid 4 1 sticky=W
+	label "Package Builder" sticky=W fg=purple3 font="bold 11" padx=0
+	entry name=dirS value="./source/newpkg" label="Package source:" width=45 mode=character func=setGUIoptions action=dirS
+	entry name=dirB value="./build/newpkg" label="Package build:" width=45 mode=character func=setGUIoptions action=dirB
+	grid 1 2 stick=E
+		button text="check" func=doAction action="mess=paste0(`devtools::check(pkg=\\``, getWinVal()$dirS, `\\`)`); eval(parse(text=mess))" bg=greenyellow
+		button text="build" func=doAction action="mess=paste0(`devtools::build(pkg=\\``, getWinVal()$dirS, `\\`, path=\\``, getWinVal()$dirB, `\\`)`); eval(parse(text=mess))" bg=cadetblue1
+

@@ -1,0 +1,11 @@
+PBSstewdio Changes
+===================================
+Authors:  JTS = Jon T. Schnute
+          RH  = Rowan Haigh
+-----------------------------------
+
+0.0.1 (2024-04-25) [Rcheck=F, Rbuild=F]
+  * Creation
+    + From the mind of JTS, a new package is born
+      - RH likes the connotation of poking a stick into Hadley Wickham's eye (Rstudio)
+

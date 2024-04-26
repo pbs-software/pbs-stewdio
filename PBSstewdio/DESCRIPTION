@@ -1,0 +1,18 @@
+Package:     PBSstewdio
+Version:     0.0.1
+Date:        2024-04-26
+Title:       PBS Stewdio -- R Kitchen Recipes
+Authors@R: c(
+   person(c("Jon", "T."), "Schnute", role = "aut", email = "schnutej@shaw.ca"),
+   person("Rowan", "Haigh", role = c("aut", "cre"), email = "rowan.haigh@dfo-mpo.gc.ca")
+   )
+Author: Jon T. Schnute [aut], Rowan Haigh [aut, cre]
+Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
+Copyright:   2024-2024, Fisheries and Oceans Canada
+Depends:     R (>= 4.3.0), PBSmodelling (>= 2.69.3)
+Imports:     methods
+Description: A preliminary attempt to build packages by 'GUI'.
+License:     GPL (>=2)
+URL:         https://github.com/pbs-software/pbs-admb,
+             https://github.com/pbs-software/pbs-stewdio
+
