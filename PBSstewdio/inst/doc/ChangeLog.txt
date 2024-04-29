@@ -4,7 +4,16 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
-0.0.1 (2024-04-25) [Rcheck=F, Rbuild=F]
+0.0.2 (2024-04-29) [Rcheck=F, Rbuild=F]
+  * Documentation
+    + Added `README.md' to root directory `pbs-stewdio', primarily for GitHub (RH 240426)
+  * Package
+    + Determined how to install devtools from their GitHub site (RH 240426)
+      - install.packages("pak")    ## has a dependency solver, so it finds version conflicts before performing the installation
+      - pak::pak("r-lib/devtools") ## finally managed to install devtools on R.4.5.0 (R-devel, 2024-04-22 r86468 ucrt) 
+    + Abandoned devtools to explore batch files (RH 240429)
+
+0.0.1 (2024-04-25) [Rcheck=T, Rbuild=T]
   * Creation
     + From the mind of JTS, a new package is born
       - RH likes the connotation of poking a stick into Hadley Wickham's eye (Rstudio)

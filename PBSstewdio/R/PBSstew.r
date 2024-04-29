@@ -64,7 +64,28 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 #	setWinVal( list( currentdir = getwd() ) )
 #	#setWinVal( list( optfile = optfile ) )
 #	setWinVal( list( optfile = pathfile ) )
+	#setPBSext("bat", '"C:/Windows/notepad.exe" %f')  ## open bat file in editor
+	setPBSext("bat", '"C:/Apps/UltraEdit/Uedit32.exe" %f')  ## open bat file in editor
 	invisible()
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~pkg
-#stew()
+
+.win.batch <- function(winName="PBSstew")
+{
+	winval = getWinVal(winName=winName)
+	bats   = c("Paths.bat", "PathCheck.bat", "Check.bat", "Build.bat")
+	batbat = paste0(winval$dirBat, "/", winval$preBat, bats)
+	batbat = c(paste0(winval$dirBat,"/Rcopy.bat"), batbat)
+	openFile(batbat)
+}
+.win.check <- function(winName="PBSstew")
+{
+	getWinVal(winName=winName, scope="L")
+	if (basename(repo)!=package)
+		repo = file.path(repo,package)
+	file.copy(from=file.path(dirRepo,package), to=dirBuild, recursive=T, copy.date=T)
+	check  = paste0(dirBat, "/", preBat, "Check")
+	cmd    = paste0(check, " ", package)
+	print(cmd) ## abandoned for now
+}
+stew()
