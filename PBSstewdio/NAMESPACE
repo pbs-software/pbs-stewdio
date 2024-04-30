@@ -1,6 +1,6 @@
 # Packages declared in the 'Depends' field should not also be in the 'Imports' field (from R-exts.pdf).
 # For PBSadmb I have to IMPORT and DEPEND on PBSmodelling.
-import( methods, PBSmodelling ) ##, devtools ) ## devtools cannot be installed properly
+import( methods, PBSmodelling ) ##, devtools ) ## devtools way too buggy and cumbersome
 
 #importFrom("graphics", "axis", "lines", "mtext", "pairs", "par", "points")
 #importFrom("utils", "read.table", "write.table")
@@ -18,5 +18,6 @@ exportPattern("^[^\\.]")
 # R now requires documentation for all exported objects,
 #  even dot functions; not desirable to keep them in the NAMESPACE.
 #export(.version)
+exportPattern("^\\.update")  ## needed by GUI functions
 exportPattern("^\\.win\\.")  ## needed by GUI functions
 

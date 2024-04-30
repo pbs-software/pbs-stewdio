@@ -1,6 +1,6 @@
 Package:     PBSstewdio
-Version:     0.0.2
-Date:        2024-04-29
+Version:     0.0.3
+Date:        2024-04-30
 Title:       PBS Stewdio -- A Code Kitchen
 Authors@R: c(
    person(c("Jon", "T."), "Schnute", role = "aut", email = "schnutej@shaw.ca"),
@@ -8,7 +8,7 @@ Authors@R: c(
    )
 Author: Jon T. Schnute [aut], Rowan Haigh [aut, cre]
 Maintainer:  Rowan Haigh <rowan.haigh@dfo-mpo.gc.ca>
-Copyright:   2024-2024, Fisheries and Oceans Canada
+Copyright:   2024, Fisheries and Oceans Canada
 Depends:     R (>= 4.3.0), PBSmodelling (>= 2.69.3)
 Imports:     methods
 Description: A preliminary attempt to build packages by 'GUI'.

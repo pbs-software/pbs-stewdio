@@ -22,3 +22,10 @@ https://github.com/pbs-software
 
 ")
 }
+# No Visible Bindings
+# ===================
+if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
+	"dirBuild", "dirMtex",  "dirRcmd", "dirRepo",
+	"package",
+	"Rpaths"
+	), package="PBSstewdio")

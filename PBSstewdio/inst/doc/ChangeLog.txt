@@ -4,6 +4,22 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.0.3 (2024-04-30) [Rcheck=T, Rbuild=T]
+  * Package
+    + Cleared the path to test R CMD check and it crashed because pdflatex.exe could not be found. (RH 240430)
+      - Added the MiKTeX directory:
+      -    set path=.;C:\Apps\MiKTeX\miktex\bin\x64
+      - and the check on PBSadmb:
+      -    C:\Apps\R\Rdev64\bin\x64\R CMD check PBSadmb_1.1.7.tar.gz
+      - worked like a charm. Then tried it on PBSmapping, which contains C source code, and it was also  successful.
+      - Guessing that the latest R installations come with their own compilers:
+      -    * used C compiler: 'gcc.exe (GCC) 13.2.0'
+      -    * used C++ compiler: 'G__~1.EXE (GCC) 13.2.0'
+      - because gcc.exe was not on the path.
+    + Specify only two paths in the GUI: R installation and the MiKTeX installation (RH 240430)
+  * GUI
+    + Added dot helper files `.updateGUI', `.win.paths', `.win.check' to manipulate GUIs (RH 240430)
+
 0.0.2 (2024-04-29) [Rcheck=F, Rbuild=F]
   * Documentation
     + Added `README.md' to root directory `pbs-stewdio', primarily for GitHub (RH 240426)

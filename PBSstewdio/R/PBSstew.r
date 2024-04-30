@@ -70,22 +70,60 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~pkg
 
-.win.batch <- function(winName="PBSstew")
+.updateGUI <- function()  ## update the main GUI  ## (RH 240430)
 {
-	winval = getWinVal(winName=winName)
-	bats   = c("Paths.bat", "PathCheck.bat", "Check.bat", "Build.bat")
-	batbat = paste0(winval$dirBat, "/", winval$preBat, bats)
-	batbat = c(paste0(winval$dirBat,"/Rcopy.bat"), batbat)
-	openFile(batbat)
+	getWinVal(winName="stewPaths",scope="L")  ## because the window lives in memory once it's created
+	Rpathlist = lapply(1:4,function(i){Rpaths[i,"path"]})
+	names(Rpathlist) = if (dim(Rpaths)[2]>1) Rpaths[,"name"] else  rownames(Rpaths)
+	setWinVal(Rpathlist,"PBSstew")
 }
-.win.check <- function(winName="PBSstew")
+.win.paths <- function(winName="PBSstew")  ## (RH 240430)
 {
 	getWinVal(winName=winName, scope="L")
-	if (basename(repo)!=package)
-		repo = file.path(repo,package)
-	file.copy(from=file.path(dirRepo,package), to=dirBuild, recursive=T, copy.date=T)
-	check  = paste0(dirBat, "/", preBat, "Check")
-	cmd    = paste0(check, " ", package)
-	print(cmd) ## abandoned for now
+	Rpaths = data.frame(path=c(dirRcmd,dirMtex,dirRepo,dirBuild), row.names=c("dirRcmd","dirMtex","dirRepo","dirBuild"))
+	#tput(Rpaths)
+	pathWin = c("window name=stewPaths title=\"Paths for PBSstewdio Package Building\" onclose=.updateGUI",
+		"grid 2 1 sticky=W",
+		"  object name=Rpaths width=\"70\"",
+		"  grid 1 3 sticky=E",
+		"    entry name=Rfile value=Rpaths.txt width=10 label=filename edit=F noeditbg=powderblue mode=character",
+		"    button text=save bg=green function=doAction action=\"getWinVal(winName=\`stewPaths\`,scope=\`L\`); write.table(Rpaths, \`Rpaths.txt\`, col.names=FALSE)\"",
+		"    button text=load bg=gold function=doAction action=\"Rpaths=read.table(\`Rpaths.txt\`, col.names=c(\`name\`,\`path\`)); setWinVal(list(Rpaths=matrix(Rpaths$path,ncol=1)),\`stewPaths\`)\""
+	)
+	createWin(pathWin, astext=TRUE)
+#browser();return()
 }
+.win.check <- function(winName="PBSstew")  ## (RH 240430)
+{
+	#path.save = shell("path", intern=T)
+	#on.exit(shell(paste0("set ",path.save)))  ## doesn't appear to be enacted
+	path.save = Sys.getenv("PATH")
+	on.exit(Sys.setenv(PATH=path.save))
+
+	getWinVal(winName=winName, scope="L")
+	if (basename(dirRepo)!=package)
+		dirRepo = file.path(dirRepo, package)
+	if (!dir.exists(dirRepo))
+		stop (paste0("Repo: '",dirRepo,"' does not exists"))
+	if (!dir.exists(dirBuild))
+		stop (paste0("Build: '",dirBuild,"' does not exists"))
+	if (!dir.exists(dirRcmd))
+		stop (paste0("Rcmd: '",dirRcmd,"' does not exists"))
+	file.copy(from=dirRepo, to=dirBuild, overwrite=T, recursive=T, copy.date=T)
+	check  = paste0(dirRcmd, "/R CMD check ")
+	Rcmd   = paste0(check, file.path(dirBuild, package))
+	path.check =  paste0(c("PATH=.",convSlashes(c(dirRcmd,dirMtex))),collapse=";")
+	Sys.setenv(PATH=path.check)
+	#cmd = paste0("set ", path.check, " & ", Rcmd)  ## setting path directly does not work
+#browser();return()
+	results = shell(Rcmd, intern=T)
+}
+#.win.batch <- function(winName="PBSstew") [deprecated]
+#{
+#	winval = getWinVal(winName=winName)
+#	bats   = c("Paths.bat", "PathCheck.bat", "Check.bat", "Build.bat")
+#	batbat = paste0(winval$dirBat, "/", winval$preBat, bats)
+#	batbat = c(paste0(winval$dirBat,"/Rcopy.bat"), batbat)
+#	openFile(batbat)
+#}
 stew()
