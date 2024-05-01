@@ -27,10 +27,11 @@ stew(pkg="PBSstewdio", wdf="stewWin.txt")
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-26}
+  Last modified \code{Rd: 2024-05-01}
 }
 \note{
-  Function is very preliminary at this point.
+  Function and windows description file (\code{stewWin.txt}) are 
+  undergoing developmental changes.
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

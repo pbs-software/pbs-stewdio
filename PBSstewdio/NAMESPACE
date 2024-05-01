@@ -2,6 +2,8 @@
 # For PBSadmb I have to IMPORT and DEPEND on PBSmodelling.
 import( methods, PBSmodelling ) ##, devtools ) ## devtools way too buggy and cumbersome
 
+importFrom("utils", "flush.console")
+
 #importFrom("graphics", "axis", "lines", "mtext", "pairs", "par", "points")
 #importFrom("utils", "read.table", "write.table")
 

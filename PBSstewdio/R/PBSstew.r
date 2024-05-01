@@ -70,6 +70,12 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 }
 ##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~pkg
 
+#.flush.cat-----------------------------2011-09-30
+# Flush the cat down the console (from PBStools)
+.flush.cat = function(...)
+{
+	cat(...); flush.console(); invisible()
+}
 .updateGUI <- function()  ## update the main GUI  ## (RH 240430)
 {
 	getWinVal(winName="stewPaths",scope="L")  ## because the window lives in memory once it's created
@@ -93,7 +99,7 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	createWin(pathWin, astext=TRUE)
 #browser();return()
 }
-.win.check <- function(winName="PBSstew")  ## (RH 240430)
+.win.check <- function(winName="PBSstew") ## (RH 240501)
 {
 	#path.save = shell("path", intern=T)
 	#on.exit(shell(paste0("set ",path.save)))  ## doesn't appear to be enacted
@@ -109,21 +115,56 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 		stop (paste0("Build: '",dirBuild,"' does not exists"))
 	if (!dir.exists(dirRcmd))
 		stop (paste0("Rcmd: '",dirRcmd,"' does not exists"))
+	.flush.cat("Copying ", package, "\n\tfrom: ", dirRepo, "\n\tto:   ", dirBuild, "\n", sep="")
 	file.copy(from=dirRepo, to=dirBuild, overwrite=T, recursive=T, copy.date=T)
-	check  = paste0(dirRcmd, "/R CMD check ")
-	Rcmd   = paste0(check, file.path(dirBuild, package))
-	path.check =  paste0(c("PATH=.",convSlashes(c(dirRcmd,dirMtex))),collapse=";")
-	Sys.setenv(PATH=path.check)
-	#cmd = paste0("set ", path.check, " & ", Rcmd)  ## setting path directly does not work
-#browser();return()
-	results = shell(Rcmd, intern=T)
+	if (getWinAct("PBSstew")[1]=="check") {
+		check  = paste0(dirRcmd, "/R CMD check ")
+		if (cran)
+			check = paste0(check, " --as-cran ")
+		Rcmd   = paste0(check, file.path(dirBuild, package))
+		path.check =  paste0(c("PATH=.",convSlashes(c(dirRcmd,dirMtex))),collapse=";")
+		Sys.setenv(PATH=path.check)
+		.flush.cat("Checking package ", package, "\n", sep="")
+		results.check = shell(Rcmd, intern=T)
+		tput(results.check)
+		print(results.check)
+	}
 }
-#.win.batch <- function(winName="PBSstew") [deprecated]
-#{
-#	winval = getWinVal(winName=winName)
-#	bats   = c("Paths.bat", "PathCheck.bat", "Check.bat", "Build.bat")
-#	batbat = paste0(winval$dirBat, "/", winval$preBat, bats)
-#	batbat = c(paste0(winval$dirBat,"/Rcopy.bat"), batbat)
-#	openFile(batbat)
-#}
-stew()
+.win.build <- function(winName="PBSstew") ## (RH 240501)
+{
+	path.save = Sys.getenv("PATH")
+	on.exit(Sys.setenv(PATH=path.save))
+
+	getWinVal(winName=winName, scope="L")
+	if (!dir.exists(dirBuild))
+		stop (paste0("Build: '",dirBuild,"' does not exists"))
+	if (!dir.exists(file.path(dirBuild,package))) {
+		## Grab it from the repo via .win.check()
+		setWinAct("PBSstew","build")  ## redundant to GUI button push but need it for debugging
+		.win.check()
+	}
+	if (!dir.exists(dirRcmd))
+		stop (paste0("Rcmd: '",dirRcmd,"' does not exists"))
+	if (any(btype)) {
+		bbtype = names(btype)[btype]
+		for (b in bbtype) {
+			if (b=="src")
+				build  = paste0(dirRcmd, "/R CMD build --no-build-vignettes --compact-vignettes ")
+			if (b=="bin")
+				build  = paste0(dirRcmd, "/R CMD INSTALL --build --compact-docs --compile-both ")
+			#Rcmd = paste0(build, file.path(dirBuild, package))  ## places build in user's cwd instead of dirBuild
+			Rcmd = paste0(build, package)
+			.flush.cat(Rcmd, "\n\tin: ", dirBuild, "\n")
+#browser();return()
+			cwd = getwd()
+			on.exit(setwd(cwd), add = TRUE)
+			setwd(dirBuild)  ## goto the user-specified build directory for package creation
+			path.build =  paste0(c("PATH=.",convSlashes(c(dirRcmd,dirMtex))),collapse=";")
+			Sys.setenv(PATH=path.build)
+			results.build = shell(Rcmd, intern=T)
+			tput(results.build)
+			print(results.build)
+		} ## end b loop bbtype
+	} ## end if any btype
+}
+#stew()

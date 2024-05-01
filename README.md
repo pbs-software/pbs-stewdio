@@ -7,7 +7,9 @@ The R package **PBSstewdio** provides a GUI interface for checking and building 
 
 **PBSstewdio** represents just one of a series of R packages developed at the Pacific Biological Station (<a href="http://www.pac.dfo-mpo.gc.ca/science/facilities-installations/index-eng.html#pbs">PBS</a>) in Nanaimo, British Columbia. The package is available on GitHub's <a href="https://github.com/pbs-software">PBS Software</a> project. The repository for **PBSstewdio** in PBS Software is available at <a href="https://github.com/pbs-software/pbs-stewdio">pbs-stewdio</a>.
 
-In theory, one can install `PBSstewdio` using **devtools** (when it's functional) using `devtools::install_github("pbs-software/pbs-stewdio/PBSstewdio")`.
+In theory, one can install `PBSstewdio` using **devtools** using `devtools::install_github("pbs-software/pbs-stewdio/PBSstewdio")`. Installing **devtools** itself is another matter. On their GiHub site, they suggest:<br>
+`install.packages("pak")`<br>
+`pak::pak("r-lib/devtools")`
 
 As with any freely available product, there is no warranty or promise that **PBSstewdio** will perform adequately for all circumstances. Additionally, coding errors are possible, and users should contact the package maintainer if bugs are detected.
 

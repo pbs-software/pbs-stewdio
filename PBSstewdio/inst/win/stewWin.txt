@@ -4,7 +4,7 @@ window name=PBSstew title="PBSstewdio for Package Building" #onclose=
 notebook tabs="'R Package' 'R Project' 'LaTeX' 'Git Support'" pady="2 0" #selected=3
 
 #Setup--------------------------------------------------------------------------
-grid 6 1 sticky=W
+grid 6 1 sticky=W padx="0 0" pady="0 0"
 	grid 1 2 sticky=W
 		label "Package Builder" sticky=W fg=purple3 font="bold 11" padx=0
 		entry name=package value=PBSadmb width=15 padx="5 0" mode=character
@@ -25,13 +25,14 @@ grid 6 1 sticky=W
 #		entry name=dirBat value="C:/Users/haighr/Files/Archive/Bat" label="Batch files:" width=33 mode=character func=setGUIoptions action=dirBat
 #		button text=">" func=doAction action="selectDir(usewidget=\"dirBat\")"
 #		entry name=preBat value="Rdev" label="Prefix:" width=5 mode=character action=preBat #func=setGUIoptions 
-	grid 1 3 stick=E
+	grid 1 5 sticky=E
 		#button text="batch" bg=cadetblue1 func=doAction action="mess=`winval=getWinVal(winName=\\`PBSstew\\`); bats=c(\\`Paths.bat\\`, \\`PathCheck.bat\\`, \\`Check.bat\\`, \\`Build.bat\\`); batbat=paste0(winval$dirBat,\\`/\\`,winval$preBat,bats); batbat=c(paste0(winval$dirBat,\\`/Rcopy.bat\\`),batbat)`; eval(parse(text=mess)); openFile(batbat)"
 		#button text="batch" bg=cadetblue1 func=.win.batch
-		button text="paths" bg=cadetblue1 func=.win.paths
-		button text="check" bg=greenyellow func=.win.check
-		button text="build" bg=gold func=.win.build
-
+		button text="paths" bg=cadetblue1 func=.win.paths action=paths
+		button text="check" bg=greenyellow func=.win.check action=check
+		check name=cran checked=F text="cran" mode=logical
+		vector name=btype length=2 labels="source binary" values="T F" mode=logical vecnames="src bin" vertical=T
+		button text="build" bg=gold func=.win.build action=build
 grid 1 1 sticky=W
 	label "R Projects" sticky=W fg=purple3 font="bold 11" padx=0
 

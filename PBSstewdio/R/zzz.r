@@ -18,6 +18,8 @@ Pacific Biological Station, Nanaimo
 
 All available PBS packages can be found at
 https://github.com/pbs-software
+
+Type stew() to start a GUI for package checks/builds.
 -----------------------------------------------------------
 
 ")
@@ -25,6 +27,8 @@ https://github.com/pbs-software
 # No Visible Bindings
 # ===================
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
+	"btype",
+	"cran",
 	"dirBuild", "dirMtex",  "dirRcmd", "dirRepo",
 	"package",
 	"Rpaths"

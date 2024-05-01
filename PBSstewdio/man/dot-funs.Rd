@@ -1,8 +1,10 @@
 \name{dot-funs}
 %- Also NEED an '\alias' for EACH other topic documented here.
+\alias{.flush.cat}
 \alias{.updateGUI}
-\alias{.win.paths}
+\alias{.win.build}
 \alias{.win.check}
+\alias{.win.paths}
 \title{
   Miscellaneous Dot Functions
 }
@@ -10,11 +12,14 @@
   An assortment of dot functions to facilitate running \pkg{PBSstewdio}.
 }
 \usage{
+.flush.cat(...)
 .updateGUI()
-.win.paths(winName="PBSstew")
+.win.build(winName="PBSstew")
 .win.check(winName="PBSstew")
+.win.paths(winName="PBSstew")
 }
 \arguments{
+  \item{...}{\code{dots} -- assortment of text strings to send to the R console}
   \item{winName}{\code{character} -- name of a GUI window}
 }
 %- maybe also 'usage' for other objects documented here.
@@ -27,13 +32,18 @@
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-04-30}
+  Last modified \code{Rd: 2024-05-01}
+}
+\note{
+  Function \code{.flush.cat} (flush the cat down the console) 
+  has been lifted verbatim from \pkg{PBStools}.
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
 In package \pkg{PBSstewdio}:\cr
   \code{\link[PBSstewdio]{stew}}\cr
 In package \pkg{PBSmodelling}:\cr
+  \code{getWinAct},
   \code{getWinVal},
   \code{setWinVal},
   \code{setGUIoptions}

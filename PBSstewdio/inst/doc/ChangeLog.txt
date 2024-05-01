@@ -4,6 +4,11 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.0.4 (2024-05-01) [Rcheck=T, Rbuild=T]
+  * GUI
+    + Added dot helper functions `.flush.cat' and `.win.build' to build packages (RH 240501)
+
+
 0.0.3 (2024-04-30) [Rcheck=T, Rbuild=T]
   * Package
     + Cleared the path to test R CMD check and it crashed because pdflatex.exe could not be found. (RH 240430)
@@ -18,7 +23,7 @@ Authors:  JTS = Jon T. Schnute
       - because gcc.exe was not on the path.
     + Specify only two paths in the GUI: R installation and the MiKTeX installation (RH 240430)
   * GUI
-    + Added dot helper files `.updateGUI', `.win.paths', `.win.check' to manipulate GUIs (RH 240430)
+    + Added dot helper functions `.updateGUI', `.win.paths', `.win.check' to manipulate operations via GUIs (RH 240430)
 
 0.0.2 (2024-04-29) [Rcheck=F, Rbuild=F]
   * Documentation
