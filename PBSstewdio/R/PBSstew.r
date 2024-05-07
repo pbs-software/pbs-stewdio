@@ -1,4 +1,4 @@
-## stew---------------------------------2024-04-25
+## stew---------------------------------2024-05-02
 ## Starts the primary GUI interface
 ## Authors: Jon T. Schnute, Rowan Haigh
 ## ---------------------------------------------RH
@@ -46,7 +46,7 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	## createWin(twdf, TRUE)
 	writeLines(temp,con=twdf)
 	createWin(twdf)
-
+	.loadGUI()
 	## set some values
 #	.load.prefix.droplist()
 #	loadOptionsGUI( atcall(.PBSadmb) )
@@ -68,7 +68,7 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	setPBSext("bat", '"C:/Apps/UltraEdit/Uedit32.exe" %f')  ## open bat file in editor
 	invisible()
 }
-##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~pkg
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~stew
 
 #.flush.cat-----------------------------2011-09-30
 # Flush the cat down the console (from PBStools)
@@ -76,17 +76,37 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 {
 	cat(...); flush.console(); invisible()
 }
-.updateGUI <- function()  ## update the main GUI  ## (RH 240430)
+.loadGUI <- function()  ## load pathways from Rpaths.txt to GUI  ## (RH 240506)
+{
+	if (!file.exists("Rpaths.txt"))
+		return(invisible(paste0("No 'Rpaths.txt' in ", getwd())))
+	Rpaths = read.table("Rpaths.txt", col.names=c("name","path"))
+	isBuild = is.element(Rpaths$name,"dirBuild")
+	if ( basename(Rpaths$path[isBuild])==getWinVal(winName="PBSstew")$package ) {
+		Rpaths$path[isBuild] = dirname(Rpaths$path[isBuild])
+		message ("'Build' path has been changed to exclude the package name ", getWinVal()$package)
+	}
+	Rpathlist = lapply(1:nrow(Rpaths),function(i){Rpaths[i,"path"]})
+	names(Rpathlist) = if (dim(Rpaths)[2]>1) Rpaths[,"name"] else  rownames(Rpaths)
+	setWinVal(Rpathlist,"PBSstew")
+	invisible("OK")
+}
+.updateGUI <- function()  ## update the main GUI (RH 240506)
 {
 	getWinVal(winName="stewPaths",scope="L")  ## because the window lives in memory once it's created
-	Rpathlist = lapply(1:4,function(i){Rpaths[i,"path"]})
+	isBuild = is.element(rownames(Rpaths),"dirBuild")
+	if ( basename(Rpaths$path[isBuild])==getWinVal(winName="PBSstew")$package ) {
+		Rpaths$path[isBuild] = dirname(Rpaths$path[isBuild])
+		message ("'Build' path has been changed to exclude the package name ", getWinVal()$package)
+	}
+	Rpathlist = lapply(1:nrow(Rpaths),function(i){Rpaths[i,"path"]})
 	names(Rpathlist) = if (dim(Rpaths)[2]>1) Rpaths[,"name"] else  rownames(Rpaths)
 	setWinVal(Rpathlist,"PBSstew")
 }
-.win.paths <- function(winName="PBSstew")  ## (RH 240430)
+.win.paths <- function(winName="PBSstew")
 {
 	getWinVal(winName=winName, scope="L")
-	Rpaths = data.frame(path=c(dirRcmd,dirMtex,dirRepo,dirBuild), row.names=c("dirRcmd","dirMtex","dirRepo","dirBuild"))
+	Rpaths = data.frame(path=c(dirRcmd,dirMtex,dirEdit,dirRepo,dirBuild), row.names=c("dirRcmd","dirMtex","dirEdit","dirRepo","dirBuild"))
 	#tput(Rpaths)
 	pathWin = c("window name=stewPaths title=\"Paths for PBSstewdio Package Building\" onclose=.updateGUI",
 		"grid 2 1 sticky=W",
@@ -166,5 +186,73 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 			print(results.build)
 		} ## end b loop bbtype
 	} ## end if any btype
+}
+.win.edit = function(winName="PBSstew")  ## (RH 240507)
+{
+	getWinVal(winName=winName, scope="L")
+	epath = switch (etype, 'repo'=dirRepo, 'build'=file.path(dirBuild,package), ".")
+	files = list.files(path=epath, full.names=F, recursive=T)
+	bad = c(grep("\\.pdf$|\\.sty$|\\.bak$|\\.tar\\.gz$|\\.zip$|\\.bup|Copy",files,value=T))
+	good = setdiff(files, bad)
+	fnams  = basename(good)
+	#shell(paste0("dir ", convSlashes(epath), " /s /b /oe"), intern = TRUE)  ## alternative but too complicated
+	ext = sapply(strsplit(fnams,split="\\."),function(x){if (length(x)==1) "misc" else rev(x)[1]})
+	fdf = data.frame(name=fnams, ext=ext, path=good)
+	fdf = fdf[order(fdf$ext),]  ## file name data frame
+	tput(fdf) ## easiest way to transfer to .win.edit.file()
+	fls =  split(fdf,fdf$ext)   ## file name list by extension
+	ford = rev(sort(sapply(fls,nrow)))
+	fgrp = split(ford, round(cumsum(ford) / (floor(sum(ford) / 3))) ) ## Use 3 columns
+
+	## Start constructing fileWin
+	fileWin = c(
+		paste0("window name=editFiles title=\"Files in ", epath, "\""),
+		"grid 1 3 sticky=NW byrow=F")
+	for (g in 1:length(fgrp)) {
+		fg = fgrp[[g]]
+		fileWin = c(fileWin,
+			paste0("  grid ", length(fg)+ifelse(g==3,1,0), " 1 sticky=NW byrow=F"))
+		for (f in 1:length(fg)) {
+			fext = names(fg)[f]
+			fnam = fls[[fext]][,"name"]
+#if(fext=="misc"){browser();return()}
+			fileWin = c(fileWin,
+				"    grid 2 1 sticky=W byrow=F",
+				paste0("      label text=\"", fext, " files\" font=\"10 bold\" sticky=NW fg=blue"),
+				paste0("      vector names=", fext, "files mode=logical vertical=T sticky=NW length=", length(fnam), " labels=\"", paste0(fnam,collapse=" "), "\" values=\"", paste0(rep("F",length(fnam)),collapse=" "), "\" vecnames=\"", paste0(fnam,collapse=" "), "\"")
+				)
+			if (g==3 && f==length(fg)) {
+				fileWin = c(fileWin,
+					"    grid 2 1 sticky=SE pady=\"10 0\"",
+					"      label text=\"Select files to edit\\nand press edit button\"",
+					"      button text=edit font=\"bold 10\" bg=gold name=editnow sticky=SE function=.win.edit.file"
+				)
+			}
+		}
+	}
+	createWin(fileWin, astext=TRUE)
+}
+.win.edit.file = function(winName="editFiles")  ## (RH 240507)
+{
+	getWinVal(winName=winName, scope="L")
+	allfiles = ls(pattern="files$")
+	lstfiles = list()
+	for (a in 1:length(allfiles)) {
+		aa = allfiles[a]
+		lstfiles[[aa]] = get(aa)
+	}
+	if (any(sapply(lstfiles,any))) {
+		afiles = lstfiles[sapply(lstfiles,any)]
+		efiles = unlist(lapply(afiles, function(x) {names(x)[x]} ))
+		tget(fdf)  ## from .win.edit()
+		unpackList(getWinVal(winName="PBSstew")[c("etype","dirEdit","dirBuild","dirRepo","package")])
+		epath = switch (etype, 'repo'=dirRepo, 'build'=file.path(dirBuild,package), ".")
+		pfiles = file.path(epath, fdf$path[is.element(fdf$name,efiles)])
+		cmd = paste0(getWinVal(winName="PBSstew")$dirEdit, " ", paste0(pfiles, collapse=" "))
+#browser();return()
+		shell(cmd, intern=T)
+	} else {
+		message ("WARNING: No files selected")
+	}
 }
 #stew()
