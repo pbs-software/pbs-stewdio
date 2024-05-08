@@ -29,7 +29,7 @@ grid 7 1 sticky=W padx="0 0" pady="0 0"
 		entry name=dirBuild value="" label="Build dir" width=50 mode=character func=setGUIoptions action=dirBuild
 		button text=">" func=doAction action="selectDir(usewidget=\"dirBuild\")"
 	grid 1 7 sticky=E
-		button text="edit" bg=lightcoral func=.win.edit action=edit
+		button text="edit" bg=rosybrown1 func=.win.edit action=edit
 		grid 2 1
 			radio name=etype value=repo text=repo mode=character
 			radio name=etype value=build text=build mode=character selected=TRUE

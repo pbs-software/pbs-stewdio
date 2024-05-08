@@ -4,6 +4,14 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.0.6 (2024-05-08) [Rcheck=T, Rbuild=T]
+  * GUI
+    + Try to ensure that `dirRepo' and `dirBuild' do not include `package' in the directory specification (RH 240508)
+      - i.e., both directories should point to a level above the package directory
+    + Changed number of columns in edit GUI to be dynamic, not fixed a three columns (RH 240508)
+      - Still need to think about issue of many (>30) files occurring for any particular extension
+    + Disabled error checking in `.loadGUI()' and `.updateGUI()' because it's handled in `.win.check()' (RH 240508)
+
 0.0.5 (2024-05-07) [Rcheck=T, Rbuild=T]
   * GUI
     + loads existing `Rpaths.txt' file on start up, otherwise paths are left blank (RH 240502)
