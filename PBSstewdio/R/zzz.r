@@ -33,6 +33,7 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"etype",
 	"fdf",
 	"package",
-	"Rpaths"
+	"Rpaths",
+	"stw"
 	), package="PBSstewdio")
 

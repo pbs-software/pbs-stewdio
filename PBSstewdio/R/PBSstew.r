@@ -77,6 +77,22 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 {
 	cat(...); flush.console(); invisible()
 }
+
+## rebug--------------------------------2024-05-09
+##  Reflect and debug: print out objects for clues when debugging.
+## -----------------------------------------------RH
+rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
+{
+	## browse option may be used in future
+	delims = rep(delim,2)[1:2]
+	.flush.cat(rep(delim[1],50), "<start>", "\n", sep="")
+	.flush.cat(label, "\n", rep("-",nchar(label)),"\n", sep="")
+	print(object)
+	.flush.cat(rep(delim[2],50), "<end>", "\n\n", sep="")
+}
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~rebug
+
+## Dot functions 
 ##----------------------------------------------------------
 .loadGUI <- function()  ## load pathways from Rpaths.txt to GUI; forget error checking  ## (RH 240508)
 {
@@ -220,21 +236,45 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	} ## end if any btype
 }
 ##----------------------------------------------------------
-.win.edit = function(winName="PBSstew")  ## (RH 240508)
+.win.edit = function(winName="PBSstew")  ## (RH 240509)
 {
 	getWinVal(winName=winName, scope="L")
 	epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
-	files = list.files(path=epath, full.names=F, recursive=T)
 	#shell(paste0("dir ", convSlashes(epath), " /s /b /oe"), intern = TRUE)  ## alternative but too complicated
-	bad.pattern = "\\.pdf$|\\.sty$|\\.bak$|\\.tar\\.gz$|\\.zip$|\\.bup|Copy|\\.rda$|\\.rds$|\\.gif$|\\.dll$|\\.o$"
-	bad   = c(grep(bad.pattern, files, value=TRUE))
-	good  = setdiff(files, bad)
+	files = list.files(path=epath, full.names=TRUE, recursive=TRUE)  ## get full path names to avoid confusion
+	if (length(files)==0) {
+		mess = paste0("No files detected in\n'", epath, "'")
+		showAlert(mess); stop(mess)
+	}
+	if (file.exists(file.path(getwd(), stw))) {
+		inpat  = readLines(file.path(getwd(), stw), warn=FALSE)
+		outpat =  gsub("(\\,)?\\s+","|", gsub("\\\"","",inpat))
+		if (length(outpat)>1)
+			outpat = paste0(outpat,collapse="|")
+		if (debug) rebug("outpat",outpat)
+#browser();return()
+		good = c(grep(outpat, files, value=TRUE))
+		if (length(good)==0) {
+			mess = paste0("User's input pattern from:\n'", file.path(getwd(), stw), "'\ndid not match any files.\n")
+			showAlert(mess); stop(mess)
+		}
+	} else {
+		bad.pattern = "\\.pdf$|\\.sty$|\\.bak$|\\.tar\\.gz$|\\.zip$|\\.bup|Copy|\\.rda$|\\.rds$|\\.gif$|\\.dll$|\\.o$"
+		bad   = c(grep(bad.pattern, files, value=TRUE))
+		good  = setdiff(files, bad)
+	}
 	fnams = basename(good)
 	if (length(fnams)==0) {
 		mess = paste0("No files detected in\n'", epath, "'")
 		showAlert(mess); stop(mess)
 	}
-	ncol = ceiling(length(fnams)/30)  ## number columns in GUI when displaying file names (based on 30 files per column)
+	ncol = ceiling(length(fnams)/25)  ## number columns in GUI when displaying file names (based on 30 files per column)
+	if (debug) {
+		rebug("epath", epath)
+		rebug("files",files)
+		rebug("fnams",fnams)
+		rebug("ncol",ncol)
+	}
 
 	ext  = sapply(strsplit(fnams,split="\\."),function(x){if (length(x)==1) "misc" else rev(x)[1]})
 	fdf  = data.frame(name=fnams, ext=ext, path=good)
@@ -242,17 +282,53 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	tput(fdf) ## easiest way to transfer to .win.edit.file()
 	fls  =  split(fdf,fdf$ext)   ## file name list by extension
 	ford = rev(sort(sapply(fls,nrow)))
-	fgrp = split(ford, round(cumsum(ford) / (floor(sum(ford) / ncol))) ) ## Use 3 columns
+
+	## Subfunction to allocate files to column (RH 240509)
+	allocator = function(x, percol=25) {
+		xcum = cumsum(x)
+		xcol = rep(0,length(x))
+		ncol = 0
+		for (i in 1:length(xcum)) {
+			if (xcum[i] >= percol) {
+				ncol = ncol + 1
+#print(c(xcum[i], percol, ncol))
+				xcol[i] = ncol
+				percol = percol * ncol
+			} else {
+				xcol[i] = ncol
+			}
+		}
+		names(xcol) = names(x)
+		return(xcol)
+	}
+	fmap = allocator(ford)
+#browser();return()
+
+	#fmap = round(cumsum(ford) / (floor(sum(ford) / ncol)))
+	#remap=.su(fmap); names(remap)=remap; remap[1:length(remap)]=1:length(remap)  ## need to revise fmap when #files/ext >> 30
+	#fmap[1:length(fmap)] = remap[as.character(fmap)] ## need element-wise to retain names
+	fgrp = split(ford, fmap) ## use revised fmap
+	#ncol = length(remap)  ## number columns in GUI when displaying file names (based on 30 files per column)
+	ncol = length(unique(fmap))  ## number columns in GUI when displaying file names (based on 25 files per column)
+	if (debug) {
+		rebug("ext", ext)
+		rebug("fdf",fdf)
+		rebug("ford",ford)
+		rebug("fmap",fmap)
+		rebug("fgrp",fgrp)
+		rebug("ncol",ncol)
+	}
 #browser();return()
 
 	## Start constructing fileWin
 	fileWin = c(
 		paste0("window name=editFiles title=\"Files in ", epath, "\""),
-		"grid 1 3 sticky=NW byrow=F")
+		paste0("grid 1 ", ncol, " sticky=NW byrow=F") )
 	for (g in 1:length(fgrp)) {
 		fg = fgrp[[g]]
 		fileWin = c(fileWin,
-			paste0("  grid ", length(fg)+ifelse(g==3,1,0), " 1 sticky=NW byrow=F"))
+			paste0("  grid ", length(fg) + ifelse(g==ncol,1,0), " 1 sticky=NW byrow=F") )  ## add an extra row for the Edit button
+#browser();return()
 		for (f in 1:length(fg)) {
 			fext = names(fg)[f]
 			fnam = fls[[fext]][,"name"]
@@ -262,18 +338,21 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 				paste0("      label text=\"", fext, " files\" font=\"10 bold\" sticky=NW fg=blue"),
 				paste0("      vector names=", fext, "files mode=logical vertical=T sticky=NW length=", length(fnam), " labels=\"", paste0(fnam,collapse=" "), "\" values=\"", paste0(rep("F",length(fnam)),collapse=" "), "\" vecnames=\"", paste0(fnam,collapse=" "), "\"")
 				)
-			if (g==3 && f==length(fg)) {
+			if (g==ncol && f==length(fg)) {
 				fileWin = c(fileWin,
 					"    grid 2 1 sticky=SE pady=\"10 0\"",
 					"      label text=\"Select files to edit\\nand press edit button\"",
 					"      button text=edit font=\"bold 10\" bg=gold name=editnow sticky=SE function=.win.edit.file"
 				)
 			}
-		}
-	}
+		} ## end f loop (# files in group)
+	} ## end g loop (# groups)
+#browser();return()
+	if (debug) rebug("fileWin", fileWin)
 	createWin(fileWin, astext=TRUE)
 }
-.win.edit.file = function(winName="editFiles")  ## (RH 240508)
+##----------------------------------------------------------
+.win.edit.file = function(winName="editFiles")  ## (RH 240509)
 {
 	getWinVal(winName=winName, scope="L")
 	allfiles = ls(pattern="files$")
@@ -288,7 +367,8 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 		tget(fdf)  ## from .win.edit()
 		unpackList(getWinVal(winName="PBSstew")[c("etype","dirEdit","dirBuild","dirRepo","package")])
 		epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
-		pfiles = file.path(epath, fdf$path[is.element(fdf$name,efiles)])
+		#pfiles = file.path(epath, fdf$path[is.element(fdf$name,efiles)])
+		pfiles = fdf$path[is.element(fdf$name,efiles)]  ## now has full path from '.win.edit()'
 		cmd = paste0(getWinVal(winName="PBSstew")$dirEdit, " ", paste0(pfiles, collapse=" "))
 #browser();return()
 		shell(cmd, intern=T)

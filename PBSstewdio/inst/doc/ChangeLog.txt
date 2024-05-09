@@ -4,6 +4,14 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.0.7 (2024-05-09) [Rcheck=T, Rbuild=T]
+  * GUI
+    + Re-arranged the GUI buttons, added debug check box, and added etry box to select *.stw file (RH 240509)
+      - *.stw file is a simple way to open specific files using patterns instead of displaying the whole shebang
+  * R code
+    + Edited function `.win.edit' to use full pathway names to files, and to use stw files (RH 240509)
+      - v.0.0.6 did not contain the most recent `edit.win' code for date 240508 due to an oversight
+
 0.0.6 (2024-05-08) [Rcheck=T, Rbuild=T]
   * GUI
     + Try to ensure that `dirRepo' and `dirBuild' do not include `package' in the directory specification (RH 240508)
