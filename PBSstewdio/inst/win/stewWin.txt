@@ -35,7 +35,7 @@ grid 7 1 sticky=W padx="0 0" pady="0 0"
 			grid 1 3
 				entry name=stw value=test.stw width=15 padx="0 5" mode=character func=setGUIoptions action=stw
 				button text=">" func=doAction action="selectFile(usewidget=\"stw\")"
-				button text="edit" bg=rosybrown1 func=.win.edit action=edit sticky=NE
+				button text="open" bg=rosybrown1 func=.win.edit action=edit sticky=NE
 			grid 1 2
 				radio name=etype value=repo text=repo mode=character
 				radio name=etype value=build text=build mode=character selected=TRUE

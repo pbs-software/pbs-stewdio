@@ -3,11 +3,12 @@
 \alias{.flush.cat}
 \alias{.loadGUI}
 \alias{.updateGUI}
+\alias{.win.paths}
 \alias{.win.build}
 \alias{.win.check}
 \alias{.win.edit}
 \alias{.win.edit.file}
-\alias{.win.paths}
+\alias{.win.run.file}
 \title{
   Miscellaneous Dot Functions
 }
@@ -18,11 +19,12 @@
 .flush.cat(...)
 .loadGUI()
 .updateGUI()
+.win.paths(winName="PBSstew")
 .win.build(winName="PBSstew")
 .win.check(winName="PBSstew")
 .win.edit(winName="PBSstew")
 .win.edit.file(winName="editFiles")
-.win.paths(winName="PBSstew")
+.win.run.file(winName="editFiles")
 }
 \arguments{
   \item{...}{\code{dots} -- assortment of text strings to send to the R console}
@@ -46,6 +48,8 @@
 
   Function \code{.win.edit.file} edits files identified and 
   listed in GUI named \code{'editFiles'}.
+  Similarly, \code{.win.run.file} attempts to run certain files
+  by extension.
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

@@ -1,6 +1,6 @@
 Package:     PBSstewdio
-Version:     0.0.7
-Date:        2024-05-09
+Version:     0.0.8
+Date:        2024-05-10
 Title:       PBS Stewdio -- A Code Kitchen
 Authors@R: c(
    person(c("Jon", "T."), "Schnute", role = "aut", email = "schnutej@shaw.ca"),

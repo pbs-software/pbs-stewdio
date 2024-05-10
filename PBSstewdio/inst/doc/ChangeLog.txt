@@ -4,6 +4,13 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.0.8 (2024-05-10) [Rcheck=T, Rbuild=T]
+  * GUI
+    + Fixed the edit GUI to display file names that contain spaces (RH 240910)
+  * R code
+    + Edited function `.win.edit' deal with missing stw files or stw files in arbitarary locations (RH 240510)
+    + Added function `.win.run.file' to run certain file types from the edit menu (RH 240510)
+
 0.0.7 (2024-05-09) [Rcheck=T, Rbuild=T]
   * GUI
     + Re-arranged the GUI buttons, added debug check box, and added etry box to select *.stw file (RH 240509)

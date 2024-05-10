@@ -236,7 +236,7 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 	} ## end if any btype
 }
 ##----------------------------------------------------------
-.win.edit = function(winName="PBSstew")  ## (RH 240509)
+.win.edit = function(winName="PBSstew")  ## (RH 240510)
 {
 	getWinVal(winName=winName, scope="L")
 	epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
@@ -246,20 +246,29 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		mess = paste0("No files detected in\n'", epath, "'")
 		showAlert(mess); stop(mess)
 	}
-	if (file.exists(file.path(getwd(), stw))) {
-		inpat  = readLines(file.path(getwd(), stw), warn=FALSE)
+	stwpath = normalizePath(dirname(stw), winslash="/", mustWork=F)
+	stwbase = basename(stw)
+	stwfile = file.path(stwpath,stwbase)
+	if (stwpath!="" && stwbase!="" && file.exists(stwfile)) {
+		usestw = TRUE
+	} else {
+		usestw = FALSE
+		mess = paste0("User-specified stw file cannot be found:\n\tstwpath = '", stwpath, "'\n\tstwbase = '", stwbase, "'\n\tstwfile = '", stwfile, "'\nAll files displayed (not subset)\n")
+		message (mess)
+	}
+	if (usestw) {
+		inpat  = readLines(stwfile, warn=FALSE)
 		outpat =  gsub("(\\,)?\\s+","|", gsub("\\\"","",inpat))
 		if (length(outpat)>1)
 			outpat = paste0(outpat,collapse="|")
 		if (debug) rebug("outpat",outpat)
-#browser();return()
 		good = c(grep(outpat, files, value=TRUE))
 		if (length(good)==0) {
 			mess = paste0("User's input pattern from:\n'", file.path(getwd(), stw), "'\ndid not match any files.\n")
 			showAlert(mess); stop(mess)
 		}
 	} else {
-		bad.pattern = "\\.pdf$|\\.sty$|\\.bak$|\\.tar\\.gz$|\\.zip$|\\.bup|Copy|\\.rda$|\\.rds$|\\.gif$|\\.dll$|\\.o$"
+		bad.pattern = "\\.pdf$|\\.sty$|\\.bak$|\\.tar\\.gz$|\\.zip$|\\.bup|Copy|\\.rda$|\\.rds$|\\.gif$|\\.dll$|\\.o$|\\.lnk$"
 		bad   = c(grep(bad.pattern, files, value=TRUE))
 		good  = setdiff(files, bad)
 	}
@@ -328,7 +337,6 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		fg = fgrp[[g]]
 		fileWin = c(fileWin,
 			paste0("  grid ", length(fg) + ifelse(g==ncol,1,0), " 1 sticky=NW byrow=F") )  ## add an extra row for the Edit button
-#browser();return()
 		for (f in 1:length(fg)) {
 			fext = names(fg)[f]
 			fnam = fls[[fext]][,"name"]
@@ -336,13 +344,16 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 			fileWin = c(fileWin,
 				"    grid 2 1 sticky=W byrow=F",
 				paste0("      label text=\"", fext, " files\" font=\"10 bold\" sticky=NW fg=blue"),
-				paste0("      vector names=", fext, "files mode=logical vertical=T sticky=NW length=", length(fnam), " labels=\"", paste0(fnam,collapse=" "), "\" values=\"", paste0(rep("F",length(fnam)),collapse=" "), "\" vecnames=\"", paste0(fnam,collapse=" "), "\"")
+				paste0("      vector names=", fext, "files mode=logical vertical=T sticky=NW length=", length(fnam), " labels=\"'", paste0(fnam,collapse="' '"), "'\" values=\"", paste0(rep("F",length(fnam)),collapse=" "), "\" vecnames=\"'", paste0(fnam,collapse="' '"), "'\"")
 				)
+#browser();return()
 			if (g==ncol && f==length(fg)) {
 				fileWin = c(fileWin,
 					"    grid 2 1 sticky=SE pady=\"10 0\"",
-					"      label text=\"Select files to edit\\nand press edit button\"",
-					"      button text=edit font=\"bold 10\" bg=gold name=editnow sticky=SE function=.win.edit.file"
+					"      label text=\"Select files to edit and/or run\"",
+					"      grid 1 2 sticky=SE",
+					"        button text=edit font=\"bold 10\" bg=gold name=editnow sticky=SE function=.win.edit.file",
+					"        button text=run font=\"bold 10\" bg=green name=runnow sticky=SE function=.win.run.file"
 				)
 			}
 		} ## end f loop (# files in group)
@@ -372,6 +383,63 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		cmd = paste0(getWinVal(winName="PBSstew")$dirEdit, " ", paste0(pfiles, collapse=" "))
 #browser();return()
 		shell(cmd, intern=T)
+	} else {
+		message ("WARNING: No files selected")
+	}
+}
+##----------------------------------------------------------
+.win.run.file = function(winName="editFiles")  ## (RH 240510)
+{
+	getWinVal(winName=winName, scope="L")
+	allfiles = ls(pattern="files$")
+	lstfiles = list()
+	for (a in 1:length(allfiles)) {
+		aa = allfiles[a]
+		lstfiles[[aa]] = get(aa)
+	}
+	if (any(sapply(lstfiles,any))) {
+		afiles = lstfiles[sapply(lstfiles,any)]
+		efiles = unlist(lapply(afiles, function(x) {names(x)[x]} ))
+		tget(fdf)  ## from .win.edit()
+		unpackList(getWinVal(winName="PBSstew")[c("etype","dirEdit","dirBuild","dirRepo","package")])
+		epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
+		#pfiles = file.path(epath, fdf$path[is.element(fdf$name,efiles)])
+		pfiles = fdf$path[is.element(fdf$name,efiles)]  ## now has full path from '.win.edit()'
+		exts = fdf$ext[match(pfiles,fdf$path)]
+		tmpdir = normalizePath(tempdir(), winslash="/", mustWork=FALSE)
+		#for (pf in pfiles) {
+		for (ext in unique(exts)) {
+			#ext  = sapply(strsplit(fnams,split="\\."),function(x){if (length(x)==1) "misc" else rev(x)[1]})
+			#ext = fdf$ext[grep(pf,fdf$path)]
+			exfiles = pfiles[grep(ext,exts)]
+			if (ext=="Rd") {
+				mess = paste0("Converting Rd file(s): '", paste0(basename(exfiles), collapse="' '"), "' to PDF in temp dir:\n\t'", tmpdir, "'\nSystem will attempt to open PDF file(s) for you.\n\n")
+				.flush.cat(mess); showAlert(mess)
+				ex0  = sub(paste0("\\.",ext), "", basename(exfiles))
+				ex1  = file.path(tmpdir, paste0(ex0,".pdf"))
+				cmds = paste0(getWinVal(winName="PBSstew")$dirRcmd, "/R CMD Rd2pdf --batch --no-preview --force --title=", ex0, " --output=", ex1, " ",  exfiles)
+				for (cmd in cmds)
+					shell(cmd, intern=T)
+				openFile(ex1)
+			} else if (ext %in% c("r","R")) {
+				## Construct a function to run at start-up
+				first =  c(
+					".First <- function() {",
+					paste0("  source(\"", exfiles, "\");"),
+					"}" )
+				writeLines(first, con=file.path(tmpdir,".First.r"))
+				writeLines(paste0("source(\"", basename(exfiles), "\")"), con=file.path(tmpdir,".RHistory"))
+				file.copy(from=exfiles, to=tmpdir, overwrite=FALSE, copy.date=TRUE)
+				cmd0 = paste0("cd /d ", tmpdir, " && ", getWinVal(winName="PBSstew")$dirRcmd, "/R CMD BATCH ", file.path(tmpdir,".First.r"))
+				cmd1 = paste0("cd /d ", tmpdir, " && ", getWinVal(winName="PBSstew")$dirRcmd, "/Rgui.exe")
+				shell(cmd0, wait=T, mustWork=F)
+				shell(cmd1, wait=F)
+#browser();return()
+			} else {
+				mess = "Support for running files only available for extensions: '.Rd', '.[rR]'\n"
+				message (mess)
+			}
+		}
 	} else {
 		message ("WARNING: No files selected")
 	}
