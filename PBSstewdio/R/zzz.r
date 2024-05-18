@@ -29,10 +29,10 @@ Type 'stew()' to start a GUI for package checks/builds.
 if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"btype",
 	"cran",
-	"dirBuild", "dirEdit", "dirMtex",  "dirRcmd", "dirRepo",
-	"etype",
+	"dirBuild", "dirEdit", "dirMtex", "dirProj", "dirRcmd", "dirRepo",
+	"epath", "etype",
 	"fdf",
-	"package",
+	"package", "project",
 	"Rpaths",
 	"stw"
 	), package="PBSstewdio")

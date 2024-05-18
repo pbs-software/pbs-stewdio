@@ -6,9 +6,12 @@
 \alias{.win.paths}
 \alias{.win.build}
 \alias{.win.check}
+\alias{.win.collect}
+\alias{.win.grab}
 \alias{.win.edit}
-\alias{.win.edit.file}
-\alias{.win.run.file}
+\alias{.win.convert}
+\alias{.win.source}
+\alias{.win.make.pkg}
 \title{
   Miscellaneous Dot Functions
 }
@@ -22,9 +25,12 @@
 .win.paths(winName="PBSstew")
 .win.build(winName="PBSstew")
 .win.check(winName="PBSstew")
-.win.edit(winName="PBSstew")
-.win.edit.file(winName="editFiles")
-.win.run.file(winName="editFiles")
+.win.collect(winName="PBSstew")
+.win.grab(winName="collect")
+.win.edit(winName="collect")
+.win.convert(winName="collect")
+.win.source(winName="collect")
+.win.make.pkg(winName="PBSstew")
 }
 \arguments{
   \item{...}{\code{dots} -- assortment of text strings to send to the R console}
@@ -40,16 +46,18 @@
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-05-07}
+  Last modified \code{Rd: 2024-05-18}
 }
 \note{
   Function \code{.flush.cat} (flush the cat down the console) 
   has been lifted verbatim from \pkg{PBStools}.
 
-  Function \code{.win.edit.file} edits files identified and 
-  listed in GUI named \code{'editFiles'}.
-  Similarly, \code{.win.run.file} attempts to run certain files
-  by extension.
+  Function:\cr
+  \code{.win.collect} collects and displays files from target directory;\cr
+  \code{.win.grab} grabs checked files from the collection;\cr
+  \code{.win.edit} edits the checked files;\cr
+  \code{.win.convert} converts checked files with extension \code{'.Rd'};\cr
+  \code{.win.source} opens a new R session for checked \code{'.[Rr]'} files.
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{

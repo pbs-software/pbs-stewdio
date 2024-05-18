@@ -1,44 +1,53 @@
-# PBSstew GUI (last modified: 2024-04-25)
+# PBSstew GUI (last modified: 2024-05-18)
 window name=PBSstew title="PBSstewdio for Package Building" #onclose=
 
-notebook tabs="'R Package' 'R Project' 'LaTeX' 'Git Support'" pady="2 0" #selected=3
+notebook tabs="'Directory Paths' 'R Package' 'Projects' 'LaTeX' 'Versioning'" pady="2 0" selected=2
 
-#Setup--------------------------------------------------------------------------
-grid 7 1 sticky=W padx="0 0" pady="0 0"
-	grid 1 4 sticky=W
-		label "Package Builder" sticky=W fg=purple3 font="bold 11" padx=0
-		entry name=package value=PBSadmb width=15 padx="5 0" mode=character
-		check name=debug checked=F text="debug" mode=logical
-		button text="paths" bg=cadetblue1 func=.win.paths action=paths padx="55 0"
+## Directory Paths--------------------------------------------------------------
+grid 8 1 sticky=W padx="0 0" pady="0 0"
+	label "Directory Paths" sticky=W fg=blue font="bold 11" padx=0
 	grid 1 2 sticky=E
-		#entry name=dirRcmd value="C:/Apps/R/Rdev64/bin/x64" label="R bin" width=50 mode=character func=setGUIoptions action=dirRcmd
-		entry name=dirRcmd value="" label="R bin" width=50 mode=character func=setGUIoptions action=dirRcmd
-		button text=">" func=doAction action="selectDir(usewidget=\"dirRcmd\")"
-	grid 1 2 sticky=E
-		#entry name=dirMtex value="C:/Apps/MiKTeX/miktex/bin/x64" label="TeX bin" width=50 mode=character func=setGUIoptions action=dirMtex
-		entry name=dirMtex value="" label="TeX bin" width=50 mode=character func=setGUIoptions action=dirMtex
-		button text=">" func=doAction action="selectDir(usewidget=\"dirMtex\")"
-	grid 1 2 sticky=E
-		#entry name=dirEdit value="C:/Apps/UltraEdit/Uedit32.exe" label="TeX bin" width=50 mode=character func=setGUIoptions action=dirMtex
-		entry name=dirEdit value="" label="Editor" width=50 mode=character func=setGUIoptions action=dirEdit
-		button text=">" func=doAction action="selectFile(usewidget=\"dirEdit\")"
-	grid 1 2 sticky=E
-		#entry name=dirRepo value="C:/Users/haighr/Files/Projects/R/Source/pbs-software/pbs-admb/trunk" label="Repo dir" width=50 mode=character func=setGUIoptions action=dirRepo
 		entry name=dirRepo value="" label="Repo dir" width=50 mode=character func=setGUIoptions action=dirRepo
 		button text=">" func=doAction action="selectDir(usewidget=\"dirRepo\")"
 	grid 1 2 sticky=E
-		#entry name=dirBuild value="C:/Users/haighr/Files/Projects/R/Build" label="Build dir" width=50 mode=character func=setGUIoptions action=dirBuild
 		entry name=dirBuild value="" label="Build dir" width=50 mode=character func=setGUIoptions action=dirBuild
 		button text=">" func=doAction action="selectDir(usewidget=\"dirBuild\")"
+	grid 1 2 sticky=E
+		entry name=dirProj value="" label="Project dir" width=50 mode=character func=setGUIoptions action=dirProj
+		button text=">" func=doAction action="selectDir(usewidget=\"dirProj\")"
+	label "System Programs" sticky=W fg=red font="bold 11" pady="5 0"
+	grid 1 2 sticky=E
+		entry name=dirRcmd value="" label="R bin" width=50 mode=character func=setGUIoptions action=dirRcmd
+		button text=">" func=doAction action="selectDir(usewidget=\"dirRcmd\")"
+	grid 1 2 sticky=E
+		entry name=dirMtex value="" label="TeX bin" width=50 mode=character func=setGUIoptions action=dirMtex
+		button text=">" func=doAction action="selectDir(usewidget=\"dirMtex\")"
+	grid 1 2 sticky=E
+		entry name=dirEdit value="" label="Editor" width=50 mode=character func=setGUIoptions action=dirEdit
+		button text=">" func=doAction action="selectFile(usewidget=\"dirEdit\")"
+
+
+## R Package--------------------------------------------------------------------
+grid 2 1 sticky=W padx="0 0" pady="0 0"
+	grid 1 6 sticky=W
+		label "Package\nBuilder" sticky=W fg=purple3 font="bold 11" padx=0
+		button text="paths" bg=cadetblue1 func=.win.paths action=paths padx="5 0"
+		label "package:" sticky=E padx="5 0"
+		droplist name=package choices=pkg.choices add=T width=15 padx="5 0" mode=character
+		button text="new"  bg=green func=.win.make.pkg action=newpkg padx="5 0"
+		grid 2 1 stick=E padx="10 0"
+			label "debug" fg=red3
+			check name=debug checked=F text="" mode=logical
 	grid 1 3 sticky=E pady="5 0"
 		grid 2 1 sticky=NE relief=groove padx="0 5"
 			grid 1 3
 				entry name=stw value=test.stw width=15 padx="0 5" mode=character func=setGUIoptions action=stw
 				button text=">" func=doAction action="selectFile(usewidget=\"stw\")"
-				button text="open" bg=rosybrown1 func=.win.edit action=edit sticky=NE
+				button text=collect bg=rosybrown1 func=.win.collect action=collect sticky=NE
 			grid 1 2
 				radio name=etype value=repo text=repo mode=character
 				radio name=etype value=build text=build mode=character selected=TRUE
+				#radio name=etype value=proj text=proj mode=character
 		grid 2 1 sticky=NE relief=groove padx="5 5"
 			button text="check" bg=greenyellow func=.win.check action=check sticky=NE
 			check name=cran checked=F text="cran" mode=logical
@@ -46,11 +55,27 @@ grid 7 1 sticky=W padx="0 0" pady="0 0"
 			vector name=btype length=2 labels="source binary" values="T F" mode=logical vecnames="src bin" vertical=T
 			button text="build" bg=gold func=.win.build action=build sticky=NE
 			#vector name=btype length=2 labels=NULL values="T F" mode=logical vecnames="src bin" vertical=F
-grid 1 1 sticky=W
-	label "R Projects" sticky=W fg=purple3 font="bold 11" padx=0
 
+## Projects---------------------------------------------------------------------
+grid 2 1 sticky=W padx="0 0" pady="0 0"
+	grid 1 4 sticky=W
+		label "Project\nManager" sticky=W fg=green4 font="bold 11" padx=0
+		entry name=project value=Area51 label=project width=15 padx="5 0" mode=character
+		check name=debug checked=F text="debug" mode=logical
+		button text="paths" bg=cadetblue1 func=.win.paths action=paths padx="5 0"
+	grid 1 1 sticky=E pady="5 0"
+		grid 2 1 sticky=NW relief=groove padx="0 5"
+			grid 1 3
+				entry name=stw value=test.stw width=15 padx="0 5" mode=character func=setGUIoptions action=stw
+				button text=">" func=doAction action="selectFile(usewidget=\"stw\")"
+				button text=collect bg=rosybrown1 func=.win.collect action=collect sticky=NE
+			grid 1 1
+				radio name=etype value=proj text=proj mode=character
+
+## LaTeX------------------------------------------------------------------------
 grid 1 1 sticky=W
 	label "LaTeX" sticky=W fg=purple3 font="bold 11" padx=0
 
+## Git Support
 grid 1 1 sticky=W
 	label "Git Support" sticky=W fg=purple3 font="bold 11" padx=0

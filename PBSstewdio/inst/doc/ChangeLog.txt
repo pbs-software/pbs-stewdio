@@ -4,6 +4,21 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.0.9 (2024-05-18) [Rcheck=T, Rbuild=T]
+  * GUI
+    + Separated the directory paths from R package to a new first notebook tab `Directory Paths' (RH 240514)
+  * R code
+    + Modified function `.win.paths' to allow user to select different pathways through pop-up GUI (RH 240514)
+      - previously, pathways could only be altered by directly editing the entry boxes
+      - changes in pop-up GUI still update the main-GUI pathways (now in notebook tab 1)
+      - debugged code to generate WDF `pathWin' to load/save pathways from/to `Rpaths.txt'.
+    + Changed function names to reflect actions identified by JTS (RH 240515)
+      - `.win.edit' changed to `.win.collect'
+      - `.win.edit.file' changed to `.win.edit'
+      - `.win.run.file' changed to `.win.convert' and `.win.source'
+    + Added new function `.win.make.pkg' to create a new package skeleton (RH 240518)
+      - R function `package.skeleton' not used because it tries to be too smart
+
 0.0.8 (2024-05-10) [Rcheck=T, Rbuild=T]
   * GUI
     + Fixed the edit GUI to display file names that contain spaces (RH 240910)

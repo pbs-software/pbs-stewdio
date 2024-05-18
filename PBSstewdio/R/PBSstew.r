@@ -45,6 +45,9 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	temp <- unlist( strsplit(temp, "\n" ) )
 	## createWin(twdf, TRUE)
 	writeLines(temp,con=twdf)
+	pkg.choices = grep("^PBS",list.dirs(.libPaths(), full.names=F, recursive=F), value=T)
+	if (length(pkg.choices)==0)
+		pkg.choices = c("PBSadmb","PBSddesolve","PBSmapping", "PBSmodelling")
 	createWin(twdf)
 	.loadGUI()
 	## set some values
@@ -112,7 +115,7 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 	invisible("OK")
 }
 ##----------------------------------------------------------
-.updateGUI <- function()  ## update the main GUI; forget error checking (RH 240508)
+.updateGUI <- function()  ## update the main GUI; forget error checking (RH 240514)
 {
 	getWinVal(winName="stewPaths",scope="L")  ## because the window lives in memory once it's created
 #	isBuild  = is.element(rownames(Rpaths),"dirBuild")
@@ -123,25 +126,37 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 #		closeWin(name="stewPaths")
 #		stop(mess)  ## showAlert cause infinite loop
 #	}
+	## Rpaths no longer an 'object' in GUI
+	dirlist = ls(pattern="^dir")
+	Rpaths  = data.frame(sapply(dirlist,function(x){get(x)})); colnames(Rpaths)="path"
 	Rpathlist = lapply(1:nrow(Rpaths),function(i){Rpaths[i,"path"]})
 	names(Rpathlist) = if (dim(Rpaths)[2]>1) Rpaths[,"name"] else  rownames(Rpaths)
 	setWinVal(Rpathlist,"PBSstew")
 }
 ##----------------------------------------------------------
-.win.paths <- function(winName="PBSstew")  ## (RH 240502)
+.win.paths <- function(winName="PBSstew")  ## (RH 240516)
 {
 	getWinVal(winName=winName, scope="L")
-	Rpaths = data.frame(path=c(dirRcmd,dirMtex,dirEdit,dirRepo,dirBuild), row.names=c("dirRcmd","dirMtex","dirEdit","dirRepo","dirBuild"))
+	Rpaths = data.frame(path=c(dirRepo,dirBuild,dirProj,dirRcmd,dirMtex,dirEdit), row.names=c("dirRepo","dirBuild","dirProj","dirRcmd","dirMtex","dirEdit"))
+	insert = character()
+	for (i in 1:nrow(Rpaths)) {
+		ii = rownames(Rpaths)[i]
+		iii = Rpaths[i,1]
+		insert = c(insert, "  grid 1 2 sticky=E")
+		insert = c(insert, paste0("    entry name=", ii, " value=\"", iii, "\" label=\"", ii, "\" width=75 mode=character func=setGUIoptions action=", ii))
+		insert = c(insert, paste0("    button text=\">\" func=doAction action=\"select", ifelse(ii %in% "dirEdit", "File","Dir"), "(usewidget=\`", ii, "\`)\""))
+	}
 	pathWin = c("window name=stewPaths title=\"Paths for PBSstewdio Package Building\" onclose=.updateGUI",
-		"grid 2 1 sticky=W",
-		"  object name=Rpaths width=\"70\"",
+		paste0("grid ", nrow(Rpaths)+1, " 1 sticky=W"),
+		#"  object name=Rpaths width=\"75\"",
+		insert,
 		"  grid 1 3 sticky=E",
 		"    entry name=Rfile value=Rpaths.txt width=10 label=filename edit=F noeditbg=powderblue mode=character",
-		"    button text=save bg=green function=doAction action=\"getWinVal(winName=\`stewPaths\`,scope=\`L\`); write.table(Rpaths, \`Rpaths.txt\`, col.names=FALSE)\"",
-		"    button text=load bg=gold function=doAction action=\"Rpaths=read.table(\`Rpaths.txt\`, col.names=c(\`name\`,\`path\`)); setWinVal(list(Rpaths=matrix(Rpaths$path,ncol=1)),\`stewPaths\`)\""
+		"    button text=save bg=green function=doAction action=\"winval= getWinVal(winName=\`stewPaths\`); zdir= grep(\`^dir\`,names(winval),value=T); Rpaths= do.call(\`rbind\`, lapply(winval[zdir], data.frame, stringsAsFactors=FALSE)); write.table(Rpaths, \`Rpaths.txt\`, col.names=FALSE)\"",
+		"    button text=load bg=gold function=doAction action=\"Rpaths=read.table(\`Rpaths.txt\`, col.names=c(\`name\`,\`path\`)); Rpathlist= lapply(1:nrow(Rpaths),function(i){Rpaths[i,\`path\`]}); names(Rpathlist)= Rpaths[,\`name\`]; setWinVal(Rpathlist,\`stewPaths\`)\""
 	)
-	createWin(pathWin, astext=TRUE)
 #browser();return()
+	createWin(pathWin, astext=TRUE)
 }
 ##----------------------------------------------------------
 .win.check <- function(winName="PBSstew") ## (RH 240508)
@@ -236,10 +251,11 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 	} ## end if any btype
 }
 ##----------------------------------------------------------
-.win.edit = function(winName="PBSstew")  ## (RH 240510)
+.win.collect = function(winName="PBSstew")  ## (RH 240515)
 {
 	getWinVal(winName=winName, scope="L")
-	epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
+	#epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
+	epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), 'proj'=file.path(dirProj,project), ".")
 	#shell(paste0("dir ", convSlashes(epath), " /s /b /oe"), intern = TRUE)  ## alternative but too complicated
 	files = list.files(path=epath, full.names=TRUE, recursive=TRUE)  ## get full path names to avoid confusion
 	if (length(files)==0) {
@@ -311,7 +327,6 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		return(xcol)
 	}
 	fmap = allocator(ford)
-#browser();return()
 
 	#fmap = round(cumsum(ford) / (floor(sum(ford) / ncol)))
 	#remap=.su(fmap); names(remap)=remap; remap[1:length(remap)]=1:length(remap)  ## need to revise fmap when #files/ext >> 30
@@ -331,7 +346,7 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 
 	## Start constructing fileWin
 	fileWin = c(
-		paste0("window name=editFiles title=\"Files in ", epath, "\""),
+		paste0("window name=collect title=\"Files in ", epath, "\""),
 		paste0("grid 1 ", ncol, " sticky=NW byrow=F") )
 	for (g in 1:length(fgrp)) {
 		fg = fgrp[[g]]
@@ -351,19 +366,19 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 				fileWin = c(fileWin,
 					"    grid 2 1 sticky=SE pady=\"10 0\"",
 					"      label text=\"Select files to edit and/or run\"",
-					"      grid 1 2 sticky=SE",
-					"        button text=edit font=\"bold 10\" bg=gold name=editnow sticky=SE function=.win.edit.file",
-					"        button text=run font=\"bold 10\" bg=green name=runnow sticky=SE function=.win.run.file"
+					"      grid 1 3 sticky=SE",
+					"        button text=edit font=\"bold 10\" bg=rosybrown1 name=editnow sticky=SE function=.win.edit",
+					"        button text=convert font=\"bold 10\" bg=gold name=runnow sticky=SE function=.win.convert",
+					"        button text=source  font=\"bold 10\" bg=green name=runnow sticky=SE function=.win.source"
 				)
 			}
 		} ## end f loop (# files in group)
 	} ## end g loop (# groups)
-#browser();return()
 	if (debug) rebug("fileWin", fileWin)
 	createWin(fileWin, astext=TRUE)
 }
 ##----------------------------------------------------------
-.win.edit.file = function(winName="editFiles")  ## (RH 240509)
+.win.grab = function(winName="collect")  ## (RH 240515) Common code for edit convert, and source
 {
 	getWinVal(winName=winName, scope="L")
 	allfiles = ls(pattern="files$")
@@ -375,73 +390,178 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 	if (any(sapply(lstfiles,any))) {
 		afiles = lstfiles[sapply(lstfiles,any)]
 		efiles = unlist(lapply(afiles, function(x) {names(x)[x]} ))
-		tget(fdf)  ## from .win.edit()
-		unpackList(getWinVal(winName="PBSstew")[c("etype","dirEdit","dirBuild","dirRepo","package")])
-		epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
-		#pfiles = file.path(epath, fdf$path[is.element(fdf$name,efiles)])
+		tget(fdf)  ## from .win.collect()
+		getWinVal(winName="PBSstew", scope="L")
+		epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), 'proj'=file.path(dirProj,project), ".")
+		tput(epath) ## should only have to determine this once
 		pfiles = fdf$path[is.element(fdf$name,efiles)]  ## now has full path from '.win.edit()'
-		cmd = paste0(getWinVal(winName="PBSstew")$dirEdit, " ", paste0(pfiles, collapse=" "))
-#browser();return()
-		shell(cmd, intern=T)
+		if (debug) rebug("pfiles",pfiles)
 	} else {
+		pfiles = ""
 		message ("WARNING: No files selected")
 	}
+	return(pfiles)
 }
 ##----------------------------------------------------------
-.win.run.file = function(winName="editFiles")  ## (RH 240510)
+.win.edit = function(winName="collect")  ## (RH 240515)
+{
+	pfiles = .win.grab()
+	if (all(pfiles=="")) {
+		invisible(return("No files to edit"))
+	}
+	getWinVal(winName="PBSstew", scope="L")
+	cmd = paste0(dirEdit, " ", paste0(pfiles, collapse=" "))
+	shell(cmd, intern=T)
+	invisible(return(cmd))
+}
+##----------------------------------------------------------
+.win.convert = function(winName="collect")  ## (RH 240510)
+{
+	pfiles = .win.grab()
+	if (all(pfiles=="")) {
+		invisible(return("No files selected"))
+	}
+	getWinVal(winName="PBSstew", scope="L")
+	valid.exts = c("Rd")
+	tget(fdf)   ## from .win.collect()
+	tget(epath) ## from .win.grab()
+	exts = fdf$ext[match(pfiles,fdf$path)]
+	if (!any(exts %in% valid.exts)){
+		mess = "No valid extensions for 'convert' action"
+		stop(mess)
+	}
+	#tmpdir = normalizePath(tempdir(), winslash="/", mustWork=FALSE)
+	outdir = dirname(epath) ## put results into build or repo
+	for (ext in unique(exts)) {
+		exfiles = pfiles[grep(ext,exts)]
+		if (debug) rebug("exfiles",exfiles)
+		if (ext=="Rd") {
+			mess = paste0("Converting Rd file(s): '", paste0(basename(exfiles), collapse="' '"), "' to PDF in directory:\n   '", outdir, "'\nSystem will attempt to open PDF file(s) for you.\n\n")
+			.flush.cat(mess)
+			ex0  = sub(paste0("\\.",ext), "", basename(exfiles))
+			ex1  = file.path(outdir, paste0(ex0,".pdf"))
+			cmds = paste0(dirRcmd, "/R CMD Rd2pdf --batch --no-preview --force --title=", ex0, " --output=", ex1, " ",  exfiles)
+			for (cmd in cmds)
+				shell(cmd, intern=T)
+			openFile(ex1)
+#browser();return()
+		} else {
+			next  ## don't bother sending a message
+			mess = paste0("'.", ext, "' : support for converting files only available for extensions: '.Rd'\n")
+			.flush.cat(mess)
+		}
+	} ## end ext loop
+	invisible(return(cmds))
+}
+##----------------------------------------------------------
+.win.source = function(winName="collect")  ## (RH 240515)
+{
+	pfiles = .win.grab()
+	if (all(pfiles=="")) {
+		invisible(return("No files selected"))
+	}
+	getWinVal(winName="PBSstew", scope="L")
+	valid.exts = c("R","r")
+	tget(fdf)   ## from .win.collect()
+	tget(epath) ## from .win.grab()
+	exts = fdf$ext[match(pfiles,fdf$path)]
+	if (!any(exts %in% valid.exts)){
+		mess = "No valid extensions for 'source' action"
+		stop(mess)
+	}
+	#tmpdir = normalizePath(tempdir(), winslash="/", mustWork=FALSE)
+	outdir = dirname(epath) ## put results into build or repo
+#browser();return()
+	for (ext in unique(exts)) {
+		exfiles = pfiles[grep(ext,exts)]
+		if (debug) rebug("exfiles",exfiles)
+		if (ext %in% c("r","R")) {
+			## Construct a function to run at start-up
+			first =  c(
+				".First <- function() {",
+				"   require(\"graphics\", quietly = TRUE)",
+				"   require(\"PBSmodelling\", quietly = TRUE)",
+				"   assign(\"clr.rgb\", list( black=c(0,0,0), ",
+				"   red=c(255,0,0), green=c(0,255,0), blue=c(0,0,255),",
+				"   yellow=c(255,255,0), magenta=c(255,0,255), forest=c(0,128,0),",
+				"   cyan=c(0,255,255), pumpkin=c(255,128,0), eggplant=c(64,0,128),",
+				"   rose=c(253,179,193), mango=c(255,209,143), sky=c(198,250,253),",
+				"   canary=c(255,255,195), lettuce=c(193,255,193), fog=c(223,223,223) ), pos=1 )",
+				"   assign(\"clr\",lapply(clr.rgb,function(v) {grDevices:::rgb(v[1],v[2],v[3],maxColorValue=255) }),pos=1)",
+				"   options(stringsAsFactors=FALSE, help_type=\"html\")",
+				"   grDevices:::ps.options(horizontal=FALSE,family=\"NimbusSan\",paper=\"special\")",
+				"   grDevices:::windows(width=6.5,height=9,record=TRUE,buffered=TRUE)",
+				"   graphics:::frame()",
+				"   grDevices:::bringToTop(-1)",
+				"   print(\"Scroll using up-arrow key to source your functions\")",
+				"}" )
+#browser();return()
+			if (debug) rebug("first",first)
+			writeLines(first, con=file.path(outdir,".First.r"))
+			writeLines(paste0("source(\"", basename(exfiles), "\")"), con=file.path(outdir,".RHistory"))
+			file.copy(from=exfiles, to=outdir, overwrite=FALSE, copy.date=TRUE)
+			cmd0 = paste0("cd /d ", outdir, " && ", dirRcmd, "/R CMD BATCH ", file.path(outdir,".First.r"))
+			cmd1 = paste0("cd /d ", outdir, " && ", dirRcmd, "/Rgui.exe")
+			shell(cmd0, wait=T, mustWork=F)
+			shell(cmd1, wait=F)
+		} else {
+			next  ## don't bother sending a message
+			mess = paste0("'.", ext, "' : support for sourcing files only available for extensions: '.[rR]'\n")
+			.flush.cat(mess)
+		}
+	} ## end ext loop
+}
+##----------------------------------------------------------
+.win.make.pkg = function(winName="PBSstew")  ## (RH 240518)
 {
 	getWinVal(winName=winName, scope="L")
-	allfiles = ls(pattern="files$")
-	lstfiles = list()
-	for (a in 1:length(allfiles)) {
-		aa = allfiles[a]
-		lstfiles[[aa]] = get(aa)
+	epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
+	if (dir.exists(epath)) {
+		mess = paste0("Package '", package, "' already exists!\n   Specify a package name that does not exist in:\n'", dirname(epath),"'")
+		showAlert(mess); stop(mess)
 	}
-	if (any(sapply(lstfiles,any))) {
-		afiles = lstfiles[sapply(lstfiles,any)]
-		efiles = unlist(lapply(afiles, function(x) {names(x)[x]} ))
-		tget(fdf)  ## from .win.edit()
-		unpackList(getWinVal(winName="PBSstew")[c("etype","dirEdit","dirBuild","dirRepo","package")])
-		epath = switch (etype, 'repo'=file.path(dirRepo,package), 'build'=file.path(dirBuild,package), ".")
-		#pfiles = file.path(epath, fdf$path[is.element(fdf$name,efiles)])
-		pfiles = fdf$path[is.element(fdf$name,efiles)]  ## now has full path from '.win.edit()'
-		exts = fdf$ext[match(pfiles,fdf$path)]
-		tmpdir = normalizePath(tempdir(), winslash="/", mustWork=FALSE)
-		#for (pf in pfiles) {
-		for (ext in unique(exts)) {
-			#ext  = sapply(strsplit(fnams,split="\\."),function(x){if (length(x)==1) "misc" else rev(x)[1]})
-			#ext = fdf$ext[grep(pf,fdf$path)]
-			exfiles = pfiles[grep(ext,exts)]
-			if (ext=="Rd") {
-				mess = paste0("Converting Rd file(s): '", paste0(basename(exfiles), collapse="' '"), "' to PDF in temp dir:\n\t'", tmpdir, "'\nSystem will attempt to open PDF file(s) for you.\n\n")
-				.flush.cat(mess); showAlert(mess)
-				ex0  = sub(paste0("\\.",ext), "", basename(exfiles))
-				ex1  = file.path(tmpdir, paste0(ex0,".pdf"))
-				cmds = paste0(getWinVal(winName="PBSstew")$dirRcmd, "/R CMD Rd2pdf --batch --no-preview --force --title=", ex0, " --output=", ex1, " ",  exfiles)
-				for (cmd in cmds)
-					shell(cmd, intern=T)
-				openFile(ex1)
-			} else if (ext %in% c("r","R")) {
-				## Construct a function to run at start-up
-				first =  c(
-					".First <- function() {",
-					paste0("  source(\"", exfiles, "\");"),
-					"}" )
-				writeLines(first, con=file.path(tmpdir,".First.r"))
-				writeLines(paste0("source(\"", basename(exfiles), "\")"), con=file.path(tmpdir,".RHistory"))
-				file.copy(from=exfiles, to=tmpdir, overwrite=FALSE, copy.date=TRUE)
-				cmd0 = paste0("cd /d ", tmpdir, " && ", getWinVal(winName="PBSstew")$dirRcmd, "/R CMD BATCH ", file.path(tmpdir,".First.r"))
-				cmd1 = paste0("cd /d ", tmpdir, " && ", getWinVal(winName="PBSstew")$dirRcmd, "/Rgui.exe")
-				shell(cmd0, wait=T, mustWork=F)
-				shell(cmd1, wait=F)
 #browser();return()
-			} else {
-				mess = "Support for running files only available for extensions: '.Rd', '.[rR]'\n"
-				message (mess)
-			}
-		}
-	} else {
-		message ("WARNING: No files selected")
-	}
+	#package.skeleton(name = package, path=dirname(epath)) ## this function tries to be smart and ends up dumb
+	ppath = file.path(dirname(epath), package)
+	dir.create(ppath)
+	for (i in c("R","data","inst","man","vignettes"))
+		dir.create(file.path(ppath, i))
+	for (j in c("doc","win"))
+		dir.create(file.path(ppath, "inst", j))
+	readme = c(
+		"* Edit the help file skeletons in 'man', possibly combining help files for multiple functions.",
+		"* Edit the package 'DESCRIPTION'.",
+		"* Edit the exports in 'NAMESPACE', and add necessary imports.",
+		"* Put any C/C++/Fortran code in 'src'.",
+		"* If you have compiled code, add a useDynLib() directive to 'NAMESPACE'.",
+		"* Run R CMD build to build the package tarball.",
+		"* Run R CMD check to check the package tarball.",
+		"",
+		"Read \"Writing R Extensions\" for more information."
+	)
+	description = c(
+		paste0("Package: ", package),
+		"Type: Package",
+		"Title: What the Package Does (Short Line)",
+		"Version: 1.0",
+		paste0("Date: ", substr(Sys.time(),1,10)),
+		"Author: Who wrote it",
+		"Maintainer: Who to complain to <yourfault@somewhere.net>",
+		"Description: More about what it does (maybe more than one line).",
+		"License: What license is it under?"
+	)
+	namespace = c(
+		"# Packages declared in the 'Depends' field should not also be in the 'Imports' field (from R-exts.pdf).",
+		"import( methods, PBSmodelling )",
+		"# importFrom(\"<somepackage>\", \"<func1>\", \"<func2>\")",
+		paste0("# Export all non-dot names from ", package),
+		"exportPattern(\"^[^\\.]\")",
+		"# R now requires documentation for all exported objects,",
+		"#  even dot functions; not desirable to keep them in the NAMESPACE.",
+		"# export(.win.func)"
+	)
+	writeLines(namespace, con=file.path(ppath,"NAMESPACE"))
+	writeLines(description, con=file.path(ppath,"DESCRIPTION"))
+	writeLines(readme, con=file.path(ppath,"Read-and-delete-me"))
+	invisible()
 }
-#stew()
