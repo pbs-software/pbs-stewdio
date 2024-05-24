@@ -4,6 +4,14 @@ Authors:  JTS = Jon T. Schnute
           RH  = Rowan Haigh
 -----------------------------------
 
+0.1.0 (2024-05-24) [Rcheck=T, Rbuild=T]
+  * GUI
+    + Changed the choice of package builds from check widgets to radio widgets (RH 240524)
+    + Created new GUI called `green' that controls processes to be evaluated and executed (RH 240524)
+  * R code
+    + Added new function `runExpr' to run expressions through a GUI named `green' (RH 240524)
+      - Needed to transfer R code from the function body to the GUI's <Start> button
+
 0.0.9 (2024-05-18) [Rcheck=T, Rbuild=T]
   * GUI
     + Separated the directory paths from R package to a new first notebook tab `Directory Paths' (RH 240514)

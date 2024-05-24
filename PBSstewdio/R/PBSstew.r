@@ -1,9 +1,12 @@
-## stew---------------------------------2024-05-02
+## stew---------------------------------2024-05-22
 ## Starts the primary GUI interface
 ## Authors: Jon T. Schnute, Rowan Haigh
 ## ---------------------------------------------RH
 stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 {
+	## Set JTS flag for indicating if the code is busy processing something (green.light=0)
+	green.light = TRUE; tput(green.light)
+
 #	.initOptions()
 #	if (!is.null(pathfile) && file.exists(pathfile))
 #		readADpaths(pathfile)
@@ -13,6 +16,7 @@ stew <- function(pkg="PBSstewdio", wdf="stewWin.txt") #, pathfile="ADpaths.txt")
 	## Perhaps rename to something else -- too similar to .PBSadmb
 #	assign("PBSadmb",list(pkg=pkg,call=match.call(),args=args(admb),useCols=NULL),envir=.PBSadmbEnv)
 
+	udir <- getwd(); tput(udir)               ## need to remember the user's working directory to offset GUI shenanigans
 	pdir <- system.file(package=pkg)          ## package directory
 	wdir <- paste(pdir,"/win",sep="")         ## window description file directory
 	#pdir <- "C:/Users/haighr/Files/Projects/R/Source/pbs-software/pbs-stewdio/trunk/PBSstewdio"  ## just fornow
@@ -158,9 +162,11 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 #browser();return()
 	createWin(pathWin, astext=TRUE)
 }
-##----------------------------------------------------------
-.win.check <- function(winName="PBSstew") ## (RH 240508)
+##------------------------------------------------RH(240523)
+.win.check <- function(winName="PBSstew")
 {
+	if (!tcall(green.light))
+		.flush.cat ("System is busy\n")
 	#path.save = shell("path", intern=T)
 	#on.exit(shell(paste0("set ",path.save)))  ## doesn't appear to be enacted
 	path.save = Sys.getenv("PATH")
@@ -194,7 +200,6 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		.flush.cat("Copying '", package, "'\n\tfrom: ", dirRepo, "\n\tto:   ", dirBuild, "\n", sep="")
 		file.copy(from=file.path(dirRepo, package), to=dirBuild, overwrite=TRUE, recursive=TRUE, copy.date=TRUE)
 	}
-#browser();return()
 	if (getWinAct("PBSstew")[1]!="build") {
 		check  = paste0(dirRcmd, "/R CMD check ")
 		if (cran)
@@ -203,14 +208,18 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		path.check =  paste0(c("PATH=.",convSlashes(c(dirRcmd,dirMtex))),collapse=";")
 		Sys.setenv(PATH=path.check)
 		.flush.cat("Checking package '", package, "'\n\t*** may take a few minutes (wait for return of R console) ***\n", sep="")
-		results.check = shell(Rcmd, intern=T)
-		tput(results.check)
-		print(results.check)
+		#results.check = shell(Rcmd, intern=T)
+		expr = paste0("results <- shell(\"", Rcmd, "\", intern=TRUE)")   ## default: wait=TRUE
+		runExpr(expr, outnam="results.check", guitext=basename(check))
 	}
 }
-##----------------------------------------------------------
-.win.build <- function(winName="PBSstew") ## (RH 240508)
+##------------------------------------------------RH(240524)
+.win.build <- function(winName="PBSstew")
 {
+	if (!tcall(green.light)) {
+		mess = "\nSystem is busy\nType '.win.reset()' if system is NOT busy\n\n"
+		.flush.cat(mess); return(mess)
+	}
 	path.save = Sys.getenv("PATH")
 	on.exit(Sys.setenv(PATH=path.save))
 
@@ -228,27 +237,29 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 		mess = paste0("Rcmd: '",dirRcmd,"'\ndoes not exist.")
 		showAlert(mess); stop(mess)
 	}
-	if (any(btype)) {
-		bbtype = names(btype)[btype]
+#browser();return()
+	## Due to limitations of 'green' GUI, can only process one command at a time
+	#if (any(btype)) { 
+		#bbtype = names(btype)[btype]
 		cwd = getwd()
 		on.exit(setwd(cwd), add = TRUE)
-		for (b in bbtype) {
-			if (b=="src")
+		#for (b in bbtype) {
+		for (b in btype) {
+			if (b=="source")
 				build  = paste0(dirRcmd, "/R CMD build --no-build-vignettes --compact-vignettes ")
-			if (b=="bin")
+			if (b=="binary")
 				build  = paste0(dirRcmd, "/R CMD INSTALL --build --compact-docs --compile-both ")
 			#Rcmd = paste0(build, file.path(dirBuild, package))  ## places build in user's cwd instead of dirBuild
 			Rcmd = paste0(build, package)
 			.flush.cat(Rcmd, "\n\tin: ", dirBuild, "\n")
-#browser();return()
 			setwd(dirBuild)  ## goto the user-specified build directory for package creation
 			path.build =  paste0(c("PATH=.",convSlashes(c(dirRcmd,dirMtex))),collapse=";")
 			Sys.setenv(PATH=path.build)
-			results.build = shell(Rcmd, intern=T)
-			tput(results.build)
-			print(results.build)
+			#results.build = shell(Rcmd, intern=T)
+			expr = paste0("results <- shell(\"", Rcmd, "\", intern=TRUE)")   ## default: wait=TRUE
+			runExpr(expr, outnam="results.build", guitext=basename(build))
 		} ## end b loop bbtype
-	} ## end if any btype
+	#} ## end if any btype
 }
 ##----------------------------------------------------------
 .win.collect = function(winName="PBSstew")  ## (RH 240515)
@@ -414,8 +425,8 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 	shell(cmd, intern=T)
 	invisible(return(cmd))
 }
-##----------------------------------------------------------
-.win.convert = function(winName="collect")  ## (RH 240510)
+##------------------------------------------------RH(240524)
+.win.convert = function(winName="collect")
 {
 	pfiles = .win.grab()
 	if (all(pfiles=="")) {
@@ -439,12 +450,13 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 			mess = paste0("Converting Rd file(s): '", paste0(basename(exfiles), collapse="' '"), "' to PDF in directory:\n   '", outdir, "'\nSystem will attempt to open PDF file(s) for you.\n\n")
 			.flush.cat(mess)
 			ex0  = sub(paste0("\\.",ext), "", basename(exfiles))
-			ex1  = file.path(outdir, paste0(ex0,".pdf"))
+			ex1  = file.path(outdir, paste0(ex0,".pdf")); tput(ex1)
 			cmds = paste0(dirRcmd, "/R CMD Rd2pdf --batch --no-preview --force --title=", ex0, " --output=", ex1, " ",  exfiles)
-			for (cmd in cmds)
-				shell(cmd, intern=T)
-			openFile(ex1)
+			## Function 'runExpr' can only do one call so amalgamate cmds
+			cmds.all = paste0(cmds, collapse=" && ")
+			expr     = paste0("results <- shell(\"", cmds.all, "\", intern=TRUE)")
 #browser();return()
+			runExpr(expr, outnam="results.convert", guitext=paste0(basename(cmds), collapse=" & "), add2expr="openFile(tcall(ex1))")
 		} else {
 			next  ## don't bother sending a message
 			mess = paste0("'.", ext, "' : support for converting files only available for extensions: '.Rd'\n")
@@ -564,4 +576,59 @@ rebug <- function(label, object, delim=c("=","~"), browse=FALSE)
 	writeLines(description, con=file.path(ppath,"DESCRIPTION"))
 	writeLines(readme, con=file.path(ppath,"Read-and-delete-me"))
 	invisible()
+}
+## runExpr -----------------------------2024-05-24
+##  Run expression and make sure that user waits
+##  for the expression to finish (e.g., R CMD check)
+## ---------------------------------------------RH
+runExpr = function(expr, green.light, outnam="results", 
+   guitext="expression", add2expr="")
+{
+	getWinVal("debug", winName="PBSstew", scope="L")
+	if (missing(green.light))
+		tget(green.light)  ## Look for it in the PBSmodelling environment
+	if (!exists("green.light", inherits=FALSE))
+		green.light = TRUE
+	if (green.light) {
+		tput(expr)
+		cwd = getwd()  ## GUI needs to know this for R CMD build (closing green window will reset to user's wd)
+		## Need to program actions in the GUI button 'Start'
+		startmess = c(
+			"green.light = FALSE; tput(green.light)",
+			"setwd(cwd)",
+			"T0 = Sys.time()",
+			"eval(parse(text=tcall(expr)))",
+			"T1 = Sys.time()",
+			"Tdiff = paste0(round(T1-T0,1), \` sec\`)",
+			"setWinVal(list(waiting=Tdiff), winName=\`green\`)",
+			"green.light = TRUE; tput(green.light)",
+			"if (grepl(\`<-\`, expr)) {",
+			"  out = strsplit(expr, split=\`(\\s+)?<-(\\s+)?\`)[[1]][1]",
+			"  outmess = paste0(outnam, \` <- \`, out, \`; tput(\`, outnam, \`); print(\`, outnam, \`)\`)",
+			"  eval(parse(text=outmess)) }"
+		)
+		if (!is.null(add2expr) && !is.na(add2expr) && !all(add2expr=="")) {
+			startmess = c(startmess, add2expr)
+		}
+		if (debug) rebug("startmess", startmess)
+		startmess = paste0(startmess, collapse="; ")
+		greenWin = c(
+			"window name=green title=\"Process expression\" bg=gainsboro onclose=.win.reset",
+			paste0("label name=morose1 text=\"Process ", sub("\\s+$","", guitext), "\" bg=gold fg=black font=\"bold 12\""),
+			"label name=morose2 text=\"   Press <Start> to evaluate the expression\" bg=yellow fg=black font=\"bold 12\"",
+			"grid 1 3 sticky=E pady=5",
+			paste0("  button text=Start name=startgreen font=\"bold 11\" bg=green padx=5 function=doAction action=\"", startmess, "\""),
+			"  entry name=waiting label=\"process time: \" value=\"TBA\" mode=character edit=F noeditbg=lightblue1 entryfont=\"bold 11\" font=\"bold 11\" width=10 pady=\"5 0\"",
+			"  button text=Close name=closegreen font=\"bold 11\" bg=pink padx=5 function=doAction action=\"closeWin(name=\`green\`)\""
+		)
+		if (debug) rebug("greeWin", greenWin)
+		createWin(greenWin, astext=TRUE)
+		focusWin(winName="green")
+	} ## end if green.light
+} ## end runExpr
+##------------------------------------------------RH(240524)
+.win.reset <- function()
+{
+	setwd(tcall(udir))
+	green.light=TRUE; tput(green.light)
 }

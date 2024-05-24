@@ -32,8 +32,10 @@ if(getRversion() >= "2.15.1") utils::globalVariables(names=c(
 	"dirBuild", "dirEdit", "dirMtex", "dirProj", "dirRcmd", "dirRepo",
 	"epath", "etype",
 	"fdf",
+	"green.light",
 	"package", "project",
 	"Rpaths",
-	"stw"
+	"stw",
+	"udir"
 	), package="PBSstewdio")
 

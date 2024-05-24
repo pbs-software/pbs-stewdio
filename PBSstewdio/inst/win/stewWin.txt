@@ -52,9 +52,11 @@ grid 2 1 sticky=W padx="0 0" pady="0 0"
 			button text="check" bg=greenyellow func=.win.check action=check sticky=NE
 			check name=cran checked=F text="cran" mode=logical
 		grid 1 2 sticky=NE relief=groove padx="5 5"
-			vector name=btype length=2 labels="source binary" values="T F" mode=logical vecnames="src bin" vertical=T
+			grid 2 1 sticky=W
+			#vector name=btype length=2 labels="source binary" values="T F" mode=logical vecnames="src bin" vertical=T
+				radio name=btype value=source text=source mode=character sticky=W selected=TRUE
+				radio name=btype value=binary text=binary mode=character sticky=W
 			button text="build" bg=gold func=.win.build action=build sticky=NE
-			#vector name=btype length=2 labels=NULL values="T F" mode=logical vecnames="src bin" vertical=F
 
 ## Projects---------------------------------------------------------------------
 grid 2 1 sticky=W padx="0 0" pady="0 0"

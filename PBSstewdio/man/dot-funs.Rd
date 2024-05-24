@@ -12,6 +12,7 @@
 \alias{.win.convert}
 \alias{.win.source}
 \alias{.win.make.pkg}
+\alias{.win.reset}
 \title{
   Miscellaneous Dot Functions
 }
@@ -31,6 +32,7 @@
 .win.convert(winName="collect")
 .win.source(winName="collect")
 .win.make.pkg(winName="PBSstew")
+.win.reset()
 }
 \arguments{
   \item{...}{\code{dots} -- assortment of text strings to send to the R console}
@@ -46,7 +48,7 @@
   \href{mailto:rowan.haigh@dfo-mpo.gc.ca}{Rowan Haigh}, Program Head -- Offshore Rockfish\cr
   Pacific Biological Station (PBS), Fisheries & Oceans Canada (DFO), Nanaimo BC\cr
   \emph{locus opus}: Remote office, Vancouver BC\cr
-  Last modified \code{Rd: 2024-05-18}
+  Last modified \code{Rd: 2024-05-24}
 }
 \note{
   Function \code{.flush.cat} (flush the cat down the console) 
@@ -57,7 +59,8 @@
   \code{.win.grab} grabs checked files from the collection;\cr
   \code{.win.edit} edits the checked files;\cr
   \code{.win.convert} converts checked files with extension \code{'.Rd'};\cr
-  \code{.win.source} opens a new R session for checked \code{'.[Rr]'} files.
+  \code{.win.source} opens a new R session for checked \code{'.[Rr]'} files;\cr
+  \code{.win.reset} sets \code{wd} back to user's \code{cwd} and sets \code{green.light=TRUE}.
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 \seealso{
